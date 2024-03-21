@@ -10,9 +10,16 @@ import org.lwjgl.opengl.GL30.*
 
 
 val vertices: FloatArray = floatArrayOf(
-    -0.5f, -0.5f, 0.0f, // left
-    0.5f, -0.5f, 0.0f, // right
-    0.0f, 0.5f, 0.0f  // top
+    // position          // color
+    0.5f, -0.5f, 0.0f,   // 1.0f,  0.0f, 0.0f, 1.0f,   // Bottom right 0
+    -0.5f, 0.5f, 0.0f,   // 0.0f,  1.0f, 0.0f, 1.0f,   // Top left     1
+    0.5f, 0.5f, 0.0f,    // 1.0f,   0.0f, 1.0f, 1.0f,  // Top right    2
+    -0.5f, -0.5f, 0.0f,  // 1.0f, 1.0f, 0.0f, 1.0f,    // Bottom left  3
+)
+
+val indices = intArrayOf(
+    2, 1, 0,  // Top right triangle
+    0, 1, 3 // bottom left triangle
 )
 
 val vertexShaderSource = "#version 330 core\n" +
@@ -96,15 +103,24 @@ fun main() {
     val VAO = glGenVertexArrays()
     glBindVertexArray(VAO)
 
+    val VBO = glGenBuffers()
     val verticesBuffer = BufferUtils.createFloatBuffer(vertices.size)
     verticesBuffer.put(vertices).flip()
 
-    val VBO = glGenBuffers()
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
     glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW)
 
+    val EBO = glGenBuffers()
+    val indicesBuffer = BufferUtils.createIntBuffer(indices.size)
+    indicesBuffer.put(indices).flip()
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW)
+
     glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * FLOAT_SIZE_IN_BYTES, 0)
     glEnableVertexAttribArray(0)
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents()
@@ -119,7 +135,7 @@ fun main() {
 
 //        glEnableVertexAttribArray(0)
 
-        glDrawArrays(GL_TRIANGLES, 0, 3)
+        glDrawElements(GL_TRIANGLES, indices.size, GL_UNSIGNED_INT, 0)
 
 //        glDisableVertexAttribArray(0)
 
