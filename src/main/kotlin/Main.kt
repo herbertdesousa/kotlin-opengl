@@ -10,31 +10,47 @@ import org.lwjgl.opengl.GL30.*
 
 
 val vertices: FloatArray = floatArrayOf(
-    // position          // color
-    0.5f, -0.5f, 0.0f,   // 1.0f,  0.0f, 0.0f, 1.0f,   // Bottom right 0
-    -0.5f, 0.5f, 0.0f,   // 0.0f,  1.0f, 0.0f, 1.0f,   // Top left     1
-    0.5f, 0.5f, 0.0f,    // 1.0f,   0.0f, 1.0f, 1.0f,  // Top right    2
-    -0.5f, -0.5f, 0.0f,  // 1.0f, 1.0f, 0.0f, 1.0f,    // Bottom left  3
+    // position         // color
+    0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f, 1.0f,   // Bottom right 0
+    -0.5f, 0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f,   // Top left     1
+    0.5f, 0.5f, 0.0f,   1.0f, 0.0f, 1.0f, 1.0f,  // Top right    2
+    -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,    // Bottom left  3
 )
 
 val indices = intArrayOf(
-    2, 1, 0,  // Top right triangle
-    0, 1, 3 // bottom left triangle
+    2, 1, 0, // Top right triangle
+    0, 1, 3, // bottom left triangle
 )
 
-val vertexShaderSource = "#version 330 core\n" +
-        "layout (location = 0) in vec3 aPos;\n" +
-        "void main()\n" +
-        "{\n" +
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" +
-        "}";
+val vertexShaderSource = """
+    #version 330 core
+    
+    layout (location = 0) in vec3 aPos;
+    layout (location = 1) in vec4 aColor;
+    
+    out vec4 fColor;
+    
+    void main() 
+    {
+        fColor = aColor;
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    }
+"""
 
-val fragmentShaderSource = "#version 330 core\n" +
-        "out vec4 FragColor;\n" +
-        "void main()\n" +
-        "{\n" +
-        "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n" +
-        "}\n";
+val fragmentShaderSource = """
+    #version 330 core
+    
+    in vec4 fColor;
+    out vec4 color;
+    
+    void main() 
+    {
+        color = fColor;
+    }
+"""
+
+const val POSITION_SIZE = 3
+const val COLOR_SIZE = 4
 
 const val FLOAT_SIZE_IN_BYTES = 4
 
@@ -117,10 +133,22 @@ fun main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW)
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * FLOAT_SIZE_IN_BYTES, 0)
+    val strideSize = (POSITION_SIZE + COLOR_SIZE) * FLOAT_SIZE_IN_BYTES
+
+    glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, strideSize, 0)
     glEnableVertexAttribArray(0)
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glVertexAttribPointer(
+        1,
+        COLOR_SIZE,
+        GL_FLOAT,
+        false,
+        strideSize,
+        (POSITION_SIZE * FLOAT_SIZE_IN_BYTES).toLong()
+    )
+    glEnableVertexAttribArray(1)
+
+//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents()
